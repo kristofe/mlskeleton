@@ -1,6 +1,3 @@
-require "io"
-
-
 function loadDelimetedTextFile(filename, sep)
   if not fileExists(filename) then 
     print(filename .. "was not found")
@@ -59,4 +56,84 @@ function parseLine (line,sep)
   return res
 end
 
-loadDelimetedTextFile("../mocap_test/test01.csv",",")
+function loadMotiveMocapCSVFile(filename)
+  --first line is metadata
+  --second line is blank
+  --third line is labels
+  --rest is data
+  
+  local results = {}
+  
+  if not fileExists(filename) then 
+    print(filename .. "was not found")
+    return {}
+  end
+  
+  local _lines = {}
+  for line in io.lines(filename) do
+    --_lines[#_lines+1] = line --lua 5.1
+    table.insert(_lines, line) -- will insert at end
+  end
+    
+  local _metadata = parseLine(table.remove(_lines, 1))
+  local _gap = table.remove(_lines,1)
+  local _types = parseLine(table.remove(_lines,1))
+  local _names = parseLine(table.remove(_lines,1))
+  local _hashes = parseLine(table.remove(_lines,1))
+  local _types = parseLine(table.remove(_lines,1))
+  local _fields = parseLine(table.remove(_lines,1))
+  
+  
+  printTable(_metadata)
+  printTable(_names)
+  printTable(_types)
+  printTable(_fields)
+  
+  local _labels = createCombinedLabels(_names, _types, _fields)
+  
+  local index = 1
+  for key,line in pairs(_lines) do
+    local t = parseLine(line, sep)
+    local e = createLabelledEntry(_labels, t)
+    if index < 20 then
+      printTable(e)      
+    end --if
+    index = index + 1
+    
+    table.insert(results,e)
+  end
+
+  return results
+
+end --loadMotiveMocapCSVFile
+
+function createCombinedLabels(names, types, fields)
+  local e = {}
+  for i, field in ipairs(fields) do
+    local name = names[i]
+    local type = types[i]
+    e[i] = name..'-'..type..'-'..field 
+  end--for
+
+  return e
+end --createLabelledEntry
+
+function createLabelledEntry(labels, entry)
+  local e = {}
+  for i, label in ipairs(labels) do
+    local d = entry[i]
+    local tmp = {}
+    e[label] = d 
+    --table.insert(e,tmp)
+  end--for
+
+  return e
+end --createLabelledEntry
+
+function printTable(t)
+  for k,v in pairs(t) do
+     print(k,v)
+  end
+end --printTable
+
+loadMotiveMocapCSVFile("../mocap_test/test01.csv")
