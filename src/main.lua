@@ -91,16 +91,20 @@ function loadMotiveMocapCSVFile(filename)
   
   local _labels = createCombinedLabels(_names, _types, _fields)
   
+  --TODO: Create a way to go from these table entries to a struct.  
+  --Maybe nest tables.  So entry.wand1.Position.x
+  
   local index = 1
   for key,line in pairs(_lines) do
     local t = parseLine(line, sep)
     local e = createLabelledEntry(_labels, t)
+    local ee = createNestedEntry(_names, _types, _fields, t)
     if index < 20 then
       printTable(e)      
     end --if
     index = index + 1
     
-    table.insert(results,e)
+    table.insert(results,ee)
   end
 
   return results
@@ -118,7 +122,37 @@ function createCombinedLabels(names, types, fields)
   return e
 end --createLabelledEntry
 
+function createNestedEntry(names, types, fields, sample)
+  local e = {}
+  for i, field in ipairs(fields) do
+    local name = names[i]
+    local type = types[i]
+    local d = sample[i]
+    
+    local nameEntry = {}
+    --find if name entry already exists
+    if(e[name]) then
+      nameEntry = e[name]
+    else
+      e[name] = nameEntry 
+    end
+    
+    
+    --find if name already has type
+    local typeEntry = {}
+    if (nameEntry[type]) then
+      typeEntry = nameEntry[type]
+    end
+    
+    typeEntry[field] = d      
+    nameEntry[type] = typeEntry
+    --table.insert(e,tmp)
+  end--for
+
+  return e
+end --createLabelledEntry
 function createLabelledEntry(labels, entry)
+  --TODO:This can be modified so the it is nested. So 
   local e = {}
   for i, label in ipairs(labels) do
     local d = entry[i]
