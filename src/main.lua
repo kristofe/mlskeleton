@@ -56,13 +56,14 @@ function parseLine (line,sep)
   return res
 end
 
-function loadMotiveMocapCSVFile(filename)
+function loadMotiveMocapCSVFile(filename, nestLabels)
   --first line is metadata
   --second line is blank
   --third line is labels
   --rest is data
   
   local results = {}
+  local useLableNesting = nestLabels or 0
   
   if not fileExists(filename) then 
     print(filename .. "was not found")
@@ -97,14 +98,18 @@ function loadMotiveMocapCSVFile(filename)
   local index = 1
   for key,line in pairs(_lines) do
     local t = parseLine(line, sep)
-    local e = createLabelledEntry(_labels, t)
-    local ee = createNestedEntry(_names, _types, _fields, t)
+    local e = {}
+    if useLabelNesting then
+      e = createLabelledEntry(_labels, t)
+    else
+      e = createNestedEntry(_names, _types, _fields, t)
+    end
     if index < 20 then
       printTable(e)      
     end --if
     index = index + 1
     
-    table.insert(results,ee)
+    table.insert(results,e)
   end
 
   return results
@@ -151,6 +156,7 @@ function createNestedEntry(names, types, fields, sample)
 
   return e
 end --createLabelledEntry
+
 function createLabelledEntry(labels, entry)
   --TODO:This can be modified so the it is nested. So 
   local e = {}
