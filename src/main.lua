@@ -76,7 +76,7 @@ function loadMotiveMocapCSVFile(filename, nestLabels)
     table.insert(_lines, line) -- will insert at end
   end
     
-  local _metadata = parseLine(table.remove(_lines, 1))
+  local _metadata = parseMetaData(parseLine(table.remove(_lines, 1)))
   local _gap = table.remove(_lines,1)
   local _types = parseLine(table.remove(_lines,1))
   local _names = parseLine(table.remove(_lines,1))
@@ -91,9 +91,6 @@ function loadMotiveMocapCSVFile(filename, nestLabels)
   printTable(_fields)
   
   local _labels = createCombinedLabels(_names, _types, _fields)
-  
-  --TODO: Create a way to go from these table entries to a struct.  
-  --Maybe nest tables.  So entry.wand1.Position.x
   
   local index = 1
   for key,line in pairs(_lines) do
@@ -112,9 +109,30 @@ function loadMotiveMocapCSVFile(filename, nestLabels)
     table.insert(results,e)
   end
 
-  return results
+  return _metdata, results
 
 end --loadMotiveMocapCSVFile
+
+function parseMetaData(data)
+	--metdata is field,data,field,data
+	local d = {}
+	local d_len = #data
+	if d_len % 2 ~= 0 then 
+	 print("Metadata is not in pairs")
+	 return d
+  end
+  
+  for i = 1, d_len, 2 do
+    d[data[i]] = data[i+1]
+  end
+  
+  for k,v in pairs(d) do
+    print(k,v)
+  end
+  
+  return d
+
+end--parseMetaData
 
 function createCombinedLabels(names, types, fields)
   local e = {}
