@@ -101,7 +101,7 @@ function loadMotiveMocapCSVFile(filename, nestLabels)
       e = createNestedEntry(_names, _types, _fields, t)
     end
     if index < 20 then
-      printTable(e)      
+      --printTable(e)      
     end --if
     index = index + 1
     
@@ -198,10 +198,40 @@ function printTable(t)
   end
 end --printTable
 
+function safePrint(value, default)
+  if value ~= nil then
+    io.write(tostring(value))
+  else 
+    io.write(default)
+  end
+end
+
+
 function writeDataToFile(filename, metadata, data)
-   for k,v in pairs(data) do
-      io.write(k)--write record number
+  local def = "0.0"
+   for record_key,record_data in pairs(data) do
+      io.write(record_key .. "\t")--write record number
       --now write each field 
+      --get name
+      for marker_name, marker_data in pairs(record_data) do
+        io.write(marker_name .. "\t")
+        if marker_data.Position ~= nil then
+          safePrint(marker_data.Position.X, def)
+          safePrint(marker_data.Position.Y, def)
+          safePrint(marker_data.Position.Z, def)
+        else
+          io.write("0\t0\t0\t")
+        end
+        if marker_data.Rotation ~= nil then
+          safePrint(marker_data.Rotation.X, def)
+          safePrint(marker_data.Rotation.Y, def)
+          safePrint(marker_data.Rotation.Z, def)
+          safePrint(marker_data.Rotation.W, def)
+        else
+          io.write("0\t0\t0\t0\t")
+        end
+        --io.write(marker_data[marker_name].Position)
+      end --for marker_name
 
       io.write("\n")
    end--for
