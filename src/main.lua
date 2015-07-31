@@ -13,7 +13,6 @@ function fileExists(filename)
   local f = io.open(filename, "r")
   if f then f:close() end
   return f ~= nil
-  
 end --fileExists
 
 function parseLine (line,sep) 
@@ -190,8 +189,26 @@ end --createLabelledEntry
 
 function printTable(t)
   for k,v in pairs(t) do
-     print(k,v)
+     if type(v) == "table" then
+       print(k)
+       print(printTable(v))
+     else
+       print(k,v)
+     end-- if
   end
 end --printTable
 
-loadMotiveMocapCSVFile("../mocap_test/test01.csv")
+function writeDataToFile(filename, metadata, data)
+   for k,v in pairs(data) do
+      io.write(k)--write record number
+      --now write each field 
+
+      io.write("\n")
+   end--for
+
+end--writeDataToFile
+
+metadata_, data_ = loadMotiveMocapCSVFile("../mocap_test/test01.csv")
+print("---------")
+writeDataToFile("mocap_data_cleaned.txt", metadata_, data_)
+
