@@ -91,6 +91,8 @@ function loadMotiveMocapCSVFile(filename, nestLabels)
   
   local _labels = createCombinedLabels(_names, _types, _fields)
   
+  printTable(_labels)
+
   local index = 1
   for key,line in pairs(_lines) do
     local t = parseLine(line, sep)
@@ -108,7 +110,7 @@ function loadMotiveMocapCSVFile(filename, nestLabels)
     table.insert(results,e)
   end
 
-  return _metdata, results
+  return _metdata, _labels,  results
 
 end --loadMotiveMocapCSVFile
 
@@ -138,7 +140,7 @@ function createCombinedLabels(names, types, fields)
   for i, field in ipairs(fields) do
     local name = names[i]
     local type = types[i]
-    e[i] = name..'-'..type..'-'..field 
+    e[i] = name..'.'..type..'.'..field 
   end--for
 
   return e
@@ -198,47 +200,60 @@ function printTable(t)
   end
 end --printTable
 
-function safePrint(value, default)
+function safePrint(value, sep, default)
   if value ~= nil then
-    io.write(tostring(value))
+    io.write(tostring(value).. sep)
+    return false
   else 
     io.write(default)
+    return true
   end
 end
 
 
-function writeDataToFile(filename, metadata, data)
+function writeDataToFile(filename, metadata, labels, data)
+  --output fieldnames
+  for label_index,label in pairs(labels) do
+    io.write(label.."\t")
+  end--for
+  io.write("\n")
+
+  --Now output data
+  --TODO: Make the markername order be the same as above.  Use the above loop as a lookup
+  --FIXME: The fields don't match the first line label output.  Fix
+  local count = 0
   local def = "0.0"
-   for record_key,record_data in pairs(data) do
+  local sep = "\t"
+  for record_key,record_data in pairs(data) do
+    if count < 10 then 
+      local missing_data = false
       io.write(record_key .. "\t")--write record number
       --now write each field 
       --get name
       for marker_name, marker_data in pairs(record_data) do
-        io.write(marker_name .. "\t")
-        if marker_data.Position ~= nil then
-          safePrint(marker_data.Position.X, def)
-          safePrint(marker_data.Position.Y, def)
-          safePrint(marker_data.Position.Z, def)
-        else
-          io.write("0\t0\t0\t")
-        end
+        --io.write(marker_name .. "\t")
         if marker_data.Rotation ~= nil then
-          safePrint(marker_data.Rotation.X, def)
-          safePrint(marker_data.Rotation.Y, def)
-          safePrint(marker_data.Rotation.Z, def)
-          safePrint(marker_data.Rotation.W, def)
-        else
-          io.write("0\t0\t0\t0\t")
+          missing_data = missing_data or safePrint(marker_data.Rotation.X, sep, def)
+          missing_data = missing_data or safePrint(marker_data.Rotation.Y, sep, def)
+          missing_data = missing_data or safePrint(marker_data.Rotation.Z, sep, def)
+          missing_data = missing_data or safePrint(marker_data.Rotation.W, sep, def)
         end
-        --io.write(marker_data[marker_name].Position)
+        if marker_data.Position ~= nil then
+          missing_data = missing_data or safePrint(marker_data.Position.X, sep, def)
+          missing_data = missing_data or safePrint(marker_data.Position.Y, sep, def)
+          missing_data = missing_data or safePrint(marker_data.Position.Z, sep, def)
+        end
       end --for marker_name
 
+      io.write(tostring(missing_data))
       io.write("\n")
-   end--for
+    end -- count
+    count = count +1
+  end--for
 
 end--writeDataToFile
 
-metadata_, data_ = loadMotiveMocapCSVFile("../mocap_test/test01.csv")
+metadata_,labels_, data_ = loadMotiveMocapCSVFile("../mocap_test/test01.csv")
 print("---------")
-writeDataToFile("mocap_data_cleaned.txt", metadata_, data_)
+writeDataToFile("mocap_data_cleaned.txt", metadata_, labels_, data_)
 
