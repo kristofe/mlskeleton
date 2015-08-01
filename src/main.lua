@@ -55,14 +55,13 @@ function parseLine (line,sep)
   return res
 end
 
-function loadMotiveMocapCSVFile(filename, nestLabels)
+function loadMotiveMocapCSVFile(filename)
   --first line is metadata
   --second line is blank
   --third line is labels
   --rest is data
   
   local results = {}
-  local useLableNesting = nestLabels or 0
   
   if not fileExists(filename) then 
     print(filename .. "was not found")
@@ -84,26 +83,21 @@ function loadMotiveMocapCSVFile(filename, nestLabels)
   local _fields = parseLine(table.remove(_lines,1))
   
   
-  printTable(_metadata)
-  printTable(_names)
-  printTable(_types)
-  printTable(_fields)
+  --printTable(_metadata,"")
+  --printTable(_names,"")
+  --printTable(_types,"")
+  --printTable(_fields,"")
   
   local _labels = createCombinedLabels(_names, _types, _fields)
   
-  printTable(_labels)
+  --printTable(_labels,"")
 
   local index = 1
   for key,line in pairs(_lines) do
     local t = parseLine(line, sep)
-    local e = {}
-    if useLabelNesting then
-      e = createLabelledEntry(_labels, t)
-    else
-      e = createNestedEntry(_names, _types, _fields, t)
-    end
+    local e = createLabelledEntry(_labels, t)
     if index < 20 then
-      --printTable(e)      
+      --printTable(e,"")      
     end --if
     index = index + 1
     
@@ -127,10 +121,6 @@ function parseMetaData(data)
     d[data[i]] = data[i+1]
   end
   
-  for k,v in pairs(d) do
-    print(k,v)
-  end
-  
   return d
 
 end--parseMetaData
@@ -140,7 +130,11 @@ function createCombinedLabels(names, types, fields)
   for i, field in ipairs(fields) do
     local name = names[i]
     local type = types[i]
-    e[i] = name..'.'..type..'.'..field 
+    if name ~= "" and type ~= "" then
+      e[i] = trim(name..'.'..type..'.'..field)
+    else
+      e[i] = trim(field)
+    end
   end--for
 
   return e
@@ -177,7 +171,6 @@ function createNestedEntry(names, types, fields, sample)
 end --createLabelledEntry
 
 function createLabelledEntry(labels, entry)
-  --TODO:This can be modified so the it is nested. So 
   local e = {}
   for i, label in ipairs(labels) do
     local d = entry[i]
@@ -189,13 +182,17 @@ function createLabelledEntry(labels, entry)
   return e
 end --createLabelledEntry
 
-function printTable(t)
+function printTable(t,sep)
   for k,v in pairs(t) do
      if type(v) == "table" then
-       print(k)
-       print(printTable(v))
+       io.write(sep)
+       io.write(k)
+       io.write("\n")
+       io.write(printTable(v, sep.."."))
      else
-       print(k,v)
+       io.write(sep)
+       io.write(k.." "..v)
+       io.write("\n")
      end-- if
   end
 end --printTable
@@ -210,6 +207,9 @@ function safePrint(value, sep, default)
   end
 end
 
+function trim(s)
+  return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
 
 function writeDataToFile(filename, metadata, labels, data)
   --output fieldnames
@@ -218,38 +218,20 @@ function writeDataToFile(filename, metadata, labels, data)
   end--for
   io.write("\n")
 
-  --Now output data
-  --TODO: Make the markername order be the same as above.  Use the above loop as a lookup
-  --FIXME: The fields don't match the first line label output.  Fix
+    
   local count = 0
   local def = "0.0"
   local sep = "\t"
-  for record_key,record_data in pairs(data) do
-    if count < 10 then 
-      local missing_data = false
-      io.write(record_key .. "\t")--write record number
-      --now write each field 
-      --get name
-      for marker_name, marker_data in pairs(record_data) do
-        --io.write(marker_name .. "\t")
-        if marker_data.Rotation ~= nil then
-          missing_data = missing_data or safePrint(marker_data.Rotation.X, sep, def)
-          missing_data = missing_data or safePrint(marker_data.Rotation.Y, sep, def)
-          missing_data = missing_data or safePrint(marker_data.Rotation.Z, sep, def)
-          missing_data = missing_data or safePrint(marker_data.Rotation.W, sep, def)
-        end
-        if marker_data.Position ~= nil then
-          missing_data = missing_data or safePrint(marker_data.Position.X, sep, def)
-          missing_data = missing_data or safePrint(marker_data.Position.Y, sep, def)
-          missing_data = missing_data or safePrint(marker_data.Position.Z, sep, def)
-        end
-      end --for marker_name
-
-      io.write(tostring(missing_data))
-      io.write("\n")
-    end -- count
-    count = count +1
-  end--for
+  for line,record_data in ipairs(data) do
+    if count < 3 then 
+      for label_index,label in pairs(labels) do
+        --io.write(label.."\t")
+        safePrint(record_data[label], sep , def)
+      end--for
+    io.write("\n")
+    end --if
+    count = count + 1
+  end --for
 
 end--writeDataToFile
 
