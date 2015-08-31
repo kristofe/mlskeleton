@@ -1,5 +1,5 @@
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 N = 100 # number of points per class
 D = 2 # dimensionality
@@ -17,6 +17,8 @@ for j in xrange(K):
 # lets visualize the data:
 
 print "done"
+plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap=plt.cm.Spectral)
+plt.show()
 
 # initialize parameters randomly
 h = 100 # size of hidden layer

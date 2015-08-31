@@ -223,13 +223,13 @@ function writeDataToFile(filename, metadata, labels, data)
   local def = "0.0"
   local sep = "\t"
   for line,record_data in ipairs(data) do
-    if count < 3 then 
+--    if count < 3 then 
       for label_index,label in pairs(labels) do
         --io.write(label.."\t")
         safePrint(record_data[label], sep , def)
       end--for
     io.write("\n")
-    end --if
+--    end --if
     count = count + 1
   end --for
 
