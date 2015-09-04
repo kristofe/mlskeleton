@@ -200,10 +200,10 @@ end --printTable
 function safePrint(value, sep, default)
   if value ~= nil then
     io.write(tostring(value).. sep)
-    return false
+    return true
   else 
     io.write(default)
-    return true
+    return false
   end
 end
 
@@ -212,10 +212,13 @@ function trim(s)
 end
 
 function writeDataToFile(filename, metadata, labels, data)
+  local file = io.open(filename, "w")
+  io.output(file)
   --output fieldnames
   for label_index,label in pairs(labels) do
     io.write(label.."\t")
   end--for
+  io.write("valid");
   io.write("\n")
 
     
@@ -223,19 +226,29 @@ function writeDataToFile(filename, metadata, labels, data)
   local def = "0.0"
   local sep = "\t"
   for line,record_data in ipairs(data) do
+      local complete = true
 --    if count < 3 then 
       for label_index,label in pairs(labels) do
         --io.write(label.."\t")
-        safePrint(record_data[label], sep , def)
+        local c = safePrint(record_data[label], sep , def)
+        if(c == false) then
+          complete = false
+        end -- if(c...
       end--for
+    if( complete == false ) then
+      io.write("\tfalse")
+    else
+      io.write("\ttrue")
+    end--if(comple 
+
     io.write("\n")
 --    end --if
     count = count + 1
   end --for
+  io.close(file)
 
 end--writeDataToFile
 
 metadata_,labels_, data_ = loadMotiveMocapCSVFile("../mocap_test/test01.csv")
-print("---------")
 writeDataToFile("mocap_data_cleaned.txt", metadata_, labels_, data_)
 
