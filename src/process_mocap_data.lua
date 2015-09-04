@@ -212,8 +212,11 @@ function trim(s)
 end
 
 function writeDataToFile(filename, metadata, labels, data)
-  local file = io.open(filename, "w")
-  io.output(file)
+  local file
+  if(filename ~= nil) then
+    file = io.open(filename, "w")
+    io.output(file)
+  end
   --output fieldnames
   for label_index,label in pairs(labels) do
     io.write(label.."\t")
@@ -227,7 +230,6 @@ function writeDataToFile(filename, metadata, labels, data)
   local sep = "\t"
   for line,record_data in ipairs(data) do
       local complete = true
---    if count < 3 then 
       for label_index,label in pairs(labels) do
         --io.write(label.."\t")
         local c = safePrint(record_data[label], sep , def)
@@ -242,13 +244,14 @@ function writeDataToFile(filename, metadata, labels, data)
     end--if(comple 
 
     io.write("\n")
---    end --if
     count = count + 1
   end --for
-  io.close(file)
+  if(filename ~= nil) then
+    io.close(file)
+  end
 
 end--writeDataToFile
 
 metadata_,labels_, data_ = loadMotiveMocapCSVFile("../mocap_test/test01.csv")
-writeDataToFile("mocap_data_cleaned.txt", metadata_, labels_, data_)
+writeDataToFile(arg[1], metadata_, labels_, data_)
 
