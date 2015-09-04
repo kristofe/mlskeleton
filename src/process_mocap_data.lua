@@ -203,12 +203,12 @@ function printTable(t,sep)
 end --printTable
 
 function safePrint(value, sep, default)
-  if value ~= nil then
-    io.write(tostring(value).. sep)
-    return true
-  else 
+  if value == nil or #value == 0 then
     io.write(default)
     return false
+  else
+    io.write(tostring(value).. sep)
+    return true
   end
 end
 
@@ -265,6 +265,7 @@ function removeInvalidData(filename)
   local validStr = "true"
   local content = {}
   local i = 1
+  local count = 0
   for line in fp:lines() do
     if i == 1 then
       content[#content + 1] = line --put header in
@@ -272,6 +273,7 @@ function removeInvalidData(filename)
       -- check if valid field is true if so then append
       if(string.sub(line,-line.len(validStr)) == validStr) then
         content[#content + 1] = line
+        count = count + 1
       end
     end
     i = i + 1
@@ -284,9 +286,12 @@ function removeInvalidData(filename)
     fp:write( string.format( "%s\n", content[i]))
   end
   fp:close()
+
+  return count
 end
 
 local filename = arg[1]
 metadata_,labels_, data_ = loadMotiveMocapCSVFile("../mocap_test/test01.csv")
 writeDataToFile(filename, metadata_, labels_, data_)
-removeInvalidData(filename)
+local valid_samples = removeInvalidData(filename)
+print( valid_samples)
