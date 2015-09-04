@@ -17,7 +17,8 @@ fieldnames.pop(0)
 fieldnames.pop(0)
 fieldnames.pop()
 
-pure_data = []
+data = []
+labels = []
 for line in lines:
   fields = line.strip().split("\t")
   print str(len(fields)) + " " + str(len(fieldnames))
@@ -29,10 +30,34 @@ for line in lines:
   fields.pop(0)
   #now take out the last column - it is the valid indicator
   fields.pop()
-  pure_data.append(fields)
+  data.append(fields[:len(fields) - 7])
+  labels.append(fields[len(fields) - 7:])
   
 print fieldnames
-print len(pure_data)
+print len(data)
+
+N = len(data) #number of training examples - around 4K
+D = len(data[0]) #dimensionality - around 42
+LABEL_DIM = 7
+X = np.zeros((N,D))
+Y = np.zeros((N,LABEL_DIM))
+
+#copy data into X
+for row in range(N):
+  for column in range(D):
+    X[row, column] = float(data[row][column]) #Slow way
+  
+#copy labels into Y
+for row in range(N):
+  for column in range(LABEL_DIM):
+    Y[row, column] = float(labels[row][column]) #Slow way
+  
+print "done importing data"
+
+print "TODO: Check data against file and make sure the columns line up and that the labels are correct!"
+plt.scatter(X[:, 0], X[:, 1], s=40, cmap=plt.cm.Spectral)
+plt.show()
+
 
 def train():
   N = 100 # number of points per class
