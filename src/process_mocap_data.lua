@@ -243,9 +243,9 @@ function writeDataToFile(filename, metadata, labels, data)
         end -- if(c...
       end--for
     if( complete == false ) then
-      io.write("\tfalse")
+      io.write("false")
     else
-      io.write("\ttrue")
+      io.write("true")
     end--if(comple 
 
     io.write("\n")
