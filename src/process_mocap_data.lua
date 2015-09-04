@@ -258,6 +258,7 @@ function writeDataToFile(filename, metadata, labels, data)
 end--writeDataToFile
 
 function removeInvalidData(filename)
+  if filename == nil then return nil end
   local fp = io.open(filename, "r")
   if fp == nil then return nil end
 
