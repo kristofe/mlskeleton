@@ -1,3 +1,8 @@
+-- USAGE:  if arg[1] exists it will be treated as a filename to write the data
+-- otherwise the data will be printed to stdin
+
+
+
 function loadDelimetedTextFile(filename, sep)
   if not fileExists(filename) then 
     print(filename .. "was not found")
@@ -252,6 +257,35 @@ function writeDataToFile(filename, metadata, labels, data)
 
 end--writeDataToFile
 
-metadata_,labels_, data_ = loadMotiveMocapCSVFile("../mocap_test/test01.csv")
-writeDataToFile(arg[1], metadata_, labels_, data_)
+function removeInvalidData(filename)
+  local fp = io.open(filename, "r")
+  if fp == nil then return nil end
 
+  local validStr = "true"
+  local content = {}
+  local i = 1
+  for line in fp:lines() do
+    if i == 1 then
+      content[#content + 1] = line --put header in
+    else
+      -- check if valid field is true if so then append
+      if(string.sub(line,-line.len(validStr)) == validStr) then
+        content[#content + 1] = line
+      end
+    end
+    i = i + 1
+  end
+  fp:close()
+
+  fp = io.open(filename, "w+")
+
+  for i = 1, #content do
+    fp:write( string.format( "%s\n", content[i]))
+  end
+  fp:close()
+end
+
+local filename = arg[1]
+metadata_,labels_, data_ = loadMotiveMocapCSVFile("../mocap_test/test01.csv")
+writeDataToFile(filename, metadata_, labels_, data_)
+removeInvalidData(filename)
