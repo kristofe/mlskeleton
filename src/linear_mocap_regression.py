@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 #read the data file
 dataFilename = "../mocap_test/labelled_data.txt"
@@ -21,7 +21,6 @@ data = []
 labels = []
 for line in lines:
   fields = line.strip().split("\t")
-  print str(len(fields)) + " " + str(len(fieldnames))
   if(len(fields) != len(fieldnames) + 3):
     continue
   #take out frame num
@@ -33,14 +32,13 @@ for line in lines:
   data.append(fields[:len(fields) - 7])
   labels.append(fields[len(fields) - 7:])
   
-print fieldnames
-print len(data)
 
 N = len(data) #number of training examples - around 4K
 D = len(data[0]) #dimensionality - around 42
+K = 1 #there are no classes as this is regression
 LABEL_DIM = 7
-X = np.zeros((N,D))
-Y = np.zeros((N,LABEL_DIM))
+X = np.zeros((N*K,D))
+y = np.zeros((N*K,LABEL_DIM))
 
 #copy data into X
 for row in range(N):
@@ -50,13 +48,59 @@ for row in range(N):
 #copy labels into Y
 for row in range(N):
   for column in range(LABEL_DIM):
-    Y[row, column] = float(labels[row][column]) #Slow way
+    y[row, column] = float(labels[row][column]) #Slow way
   
 print "done importing data"
 #NOTE: I manually checked parsing... it is correct.
 
-#plt.scatter(X[:, 0], X[:, 1], s=40, cmap=plt.cm.Spectral)
-#plt.show()
+#Train a Linear Classifier
+  
+# initialize parameters randomly
+W = 0.01 * np.random.randn(D,K) #This is 42 weights... looks right(?)
+b = np.zeros((1,K)) #Just one bias
+
+# some hyperparameters
+step_size = 1e-0
+reg = 1e-3 # regularization strength
+
+# gradient descent loop
+num_examples = X.shape[0]
+for i in xrange(200):
+
+  # evaluate class scores, [N x K]
+  scores = np.dot(X, W) + b 
+
+  # compute the class probabilities
+  exp_scores = np.exp(scores)
+  probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True) # [N x K]
+
+#TODO: change loss to L2.  This might affect gradient calculation.
+  # compute the loss: average cross-entropy loss and regularization
+  corect_logprobs = -np.log(probs[range(num_examples),y])  #This changes
+  data_loss = np.sum(corect_logprobs)/num_examples  #This changes
+  reg_loss = 0.5*reg*np.sum(W*W) #this stays the same
+  loss = data_loss + reg_loss #this stays the same
+  if i % 10 == 0:
+    print "iteration %d: loss %f" % (i, loss)
+
+  # compute the gradient on scores
+  dscores = probs  #This changes
+  dscores[range(num_examples),y] -= 1  #This changes
+  dscores /= num_examples  #This changes
+
+  # backpropate the gradient to the parameters (W,b)
+  dW = np.dot(X.T, dscores)
+  db = np.sum(dscores, axis=0, keepdims=True)
+
+  dW += reg*W # regularization gradient
+
+  # perform a parameter update
+  W += -step_size * dW
+
+# evaluate training set accuracy
+#scores = np.dot(X, W) + b
+#predicted_class = np.argmax(scores, axis=1)
+#print 'training accuracy: %.2f' % (np.mean(predicted_class == y))
 
 
 
@@ -78,8 +122,8 @@ def train():
   # lets visualize the data:
   
   print "done"
-  plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap=plt.cm.Spectral)
-  plt.show()
+  #plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap=plt.cm.Spectral)
+  #plt.show()
   #Train a Linear Classifier
   
   # initialize parameters randomly
