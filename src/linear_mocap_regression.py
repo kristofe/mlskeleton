@@ -53,10 +53,12 @@ for row in range(N):
     Y[row, column] = float(labels[row][column]) #Slow way
   
 print "done importing data"
+#NOTE: I manually checked parsing... it is correct.
 
-print "TODO: Check data against file and make sure the columns line up and that the labels are correct!"
-plt.scatter(X[:, 0], X[:, 1], s=40, cmap=plt.cm.Spectral)
-plt.show()
+#plt.scatter(X[:, 0], X[:, 1], s=40, cmap=plt.cm.Spectral)
+#plt.show()
+
+
 
 
 def train():
