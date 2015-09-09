@@ -2,6 +2,20 @@ import sys
 import numpy as np
 #import matplotlib.pyplot as plt
 
+#NOTES FROM ROSS - 9/9/15
+#NOTE:  W should be 42x7
+#NOTE:  Bias should be 1x7
+#for linear regression -
+#loss = 0.5*sum((scores-targets)^2)
+#scores = Wx + b
+#dL/dW = dL/dscores * dscores/dW
+#dL/dscores = (score - y)
+#dscores/dW = X
+#so
+#dL/dW = (score - y) * X
+#you can then update the weights with this gradient
+
+
 #read the data file
 dataFilename = "../mocap_test/labelled_data.txt"
 if(len(sys.argv) > 1):
