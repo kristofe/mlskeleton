@@ -70,37 +70,33 @@ print "done importing data"
 #Train a Linear Classifier
   
 # initialize parameters randomly
-W = 0.01 * np.random.randn(D,K) #This is 42 weights... looks right(?)
-b = np.zeros((1,K)) #Just one bias
+W = 0.01 * np.random.randn(D,LABEL_DIM) #This is 42 weights... looks right(?)
+b = np.zeros((1,LABEL_DIM)) #Just one bias
 
 # some hyperparameters
-step_size = 1e-0
+step_size = 1e-5
 reg = 1e-3 # regularization strength
 
 # gradient descent loop
 num_examples = X.shape[0]
-for i in xrange(200):
+for i in xrange(1000000):
 
   # evaluate class scores, [N x K]
-  scores = np.dot(X, W) + b 
+  scores = np.dot(X, W) + b
+  
+  #compute the L2 loss
+  score_diff = np.subtract(scores, y)
+  L2_loss = 0.5 * np.sum(np.multiply(score_diff,score_diff))
 
-  # compute the class probabilities
-  exp_scores = np.exp(scores)
-  probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True) # [N x K]
 
-#TODO: change loss to L2.  This might affect gradient calculation.
-  # compute the loss: average cross-entropy loss and regularization
-  corect_logprobs = -np.log(probs[range(num_examples),y])  #This changes
-  data_loss = np.sum(corect_logprobs)/num_examples  #This changes
+  data_loss = L2_loss
   reg_loss = 0.5*reg*np.sum(W*W) #this stays the same
   loss = data_loss + reg_loss #this stays the same
-  if i % 10 == 0:
+  if i % 100 == 0:
     print "iteration %d: loss %f" % (i, loss)
 
   # compute the gradient on scores
-  dscores = probs  #This changes
-  dscores[range(num_examples),y] -= 1  #This changes
-  dscores /= num_examples  #This changes
+  dscores = score_diff
 
   # backpropate the gradient to the parameters (W,b)
   dW = np.dot(X.T, dscores)
