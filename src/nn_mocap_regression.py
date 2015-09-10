@@ -70,19 +70,20 @@ print "done importing data"
 #Train a neural net
   
 # initialize parameters randomly
-h = 100 # size of hidden layer
+h = 42 # size of hidden layer
 W = 0.01 * np.random.randn(D,h)
 b = np.zeros((1,h))
 W2 = 0.01 * np.random.randn(h,LABEL_DIM)
 b2 = np.zeros((1,LABEL_DIM))
 
 # some hyperparameters
-step_size = 1e-5
-reg = 1e-4 # regularization strength
+step_size = 1e-4
+reg = 1e-5 # regularization strength
 
+last_loss = 999999999.99
 # gradient descent loop
 num_examples = X.shape[0]
-for i in xrange(100000):
+for i in xrange(50000):
 
   # evaluate class scores, [N x K]
   hidden_layer = np.maximum(0, np.dot(X,W) + b) #note ReLU activation
@@ -96,8 +97,14 @@ for i in xrange(100000):
   data_loss = L2_loss
   reg_loss = 0.5*reg*np.sum(W*W) #this stays the same
   loss = data_loss + reg_loss #this stays the same
+  
+  #reduce step size if we start getting worse performance
+  if loss > last_loss:
+    step_size *= 0.9
+  
   if i % 100 == 0:
-    print "iteration %d: loss %f" % (i, loss)
+    print "iteration %d: step_size: %f \tloss %f" % (i, step_size, loss)
+    last_loss = loss
 
   # compute the gradient on scores
   dscores = score_diff
