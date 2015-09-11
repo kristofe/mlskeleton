@@ -73,12 +73,14 @@ print "done importing data"
 h = 42 # size of hidden layer
 W = 0.01 * np.random.randn(D,h)
 b = np.zeros((1,h))
-W2 = 0.01 * np.random.randn(h,LABEL_DIM)
+W1 = 0.01 * np.random.randn(h,h/2)
+b1 = np.zeros((1,h/2))
+W2 = 0.01 * np.random.randn(h/2,LABEL_DIM)
 b2 = np.zeros((1,LABEL_DIM))
 
 # some hyperparameters
 step_size = 1e-4
-reg = 1e-5 # regularization strength
+reg = 1e-4 # regularization strength
 
 last_loss = 999999999.99
 # gradient descent loop
@@ -87,7 +89,8 @@ for i in xrange(50000):
 
   # evaluate class scores, [N x K]
   hidden_layer = np.maximum(0, np.dot(X,W) + b) #note ReLU activation
-  scores = np.dot(hidden_layer, W2) + b2
+  hidden_layer2 = np.maximum(0, np.dot(hidden_layer,W1) + b1) #note ReLU activation
+  scores = np.dot(hidden_layer2, W2) + b2
   
   #compute the L2 loss
   score_diff = np.subtract(scores, y)
@@ -109,21 +112,21 @@ for i in xrange(50000):
   # compute the gradient on scores
   dscores = score_diff
 
-  # backpropate the gradient to the parameters (W,b)
-##dW = np.dot(X.T, dscores)
-##db = np.sum(dscores, axis=0, keepdims=True)
-##
-##dW += reg*W # regularization gradient
-
-##  # perform a parameter update
-##  W += -step_size * dW
-
   # backpropate the gradient to the parameters
   # first backprop into parameters W2 and b2
-  dW2 = np.dot(hidden_layer.T, dscores)
+  dW2 = np.dot(hidden_layer2.T, dscores)
   db2 = np.sum(dscores, axis=0, keepdims=True)
+  
   # next backprop into hidden layer
-  dhidden = np.dot(dscores, W2.T)
+  dhidden2 = np.dot(dscores, W2.T)
+  # backprop the ReLU non-linearity
+  dhidden2[hidden_layer2 <= 0] = 0
+  # finally into W,b
+  dW1 = np.dot(hidden_layer.T, dhidden2)
+  db1 = np.sum(dhidden2, axis=0, keepdims=True)
+  
+  # next backprop into hidden layer
+  dhidden = np.dot(dhidden2, W1.T)
   # backprop the ReLU non-linearity
   dhidden[hidden_layer <= 0] = 0
   # finally into W,b
@@ -132,16 +135,20 @@ for i in xrange(50000):
 
   # add regularization gradient contribution
   dW2 += reg * W2
+  dW1 += reg * W1
   dW += reg * W
 
   # perform a parameter update
   W += -step_size * dW
   b += -step_size * db
+  W1 += -step_size * dW1
+  b1 += -step_size * db1
   W2 += -step_size * dW2
   b2 += -step_size * db2
   
 # evaluate training set accuracy
-hidden_layer = np.maximum(0, np.dot(X, W) + b)
+hidden_layer = np.maximum(0, np.dot(X,W) + b) #note ReLU activation
+hidden_layer2 = np.maximum(0, np.dot(hidden_layer2,W1) + b1) #note ReLU activation
 scores = np.dot(hidden_layer, W2) + b2
 score_diff = np.subtract(scores,y)
 distances = np.sqrt(np.multiply(score_diff, score_diff))
