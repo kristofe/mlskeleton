@@ -16,10 +16,24 @@ import numpy as np
 #you can then update the weights with this gradient
 
 
-#read the data file
-dataFilename = "../mocap_test/labelled_data.txt"
+# some hyperparameters
+step_size = 1e-4
+reg = 1e-4 # regularization strength#read the data file
+hidden_layer_size = 84
+
 if(len(sys.argv) > 1):
-  dataFilename = sys.argv[1]
+  hidden_layer_size = float(sys.argv[1])
+  print "Using hidden layer size %d" % hidden_layer_size
+
+if(len(sys.argv) > 2):
+  reg = float(sys.argv[2])
+  print "Using reg %f " % (reg)
+
+
+
+dataFilename = "../mocap_test/labelled_data.txt"
+#if(len(sys.argv) > 1):
+#  dataFilename = sys.argv[1]
 
 txtfile = open(dataFilename)
 lines = txtfile.read().split("\n")
@@ -70,17 +84,16 @@ print "done importing data"
 #Train a neural net
   
 # initialize parameters randomly
-h = 42 # size of hidden layer
+h = hidden_layer_size # size of hidden layer
+h2 = h / 2
 W = 0.01 * np.random.randn(D,h)
 b = np.zeros((1,h))
-W1 = 0.01 * np.random.randn(h,h/2)
-b1 = np.zeros((1,h/2))
-W2 = 0.01 * np.random.randn(h/2,LABEL_DIM)
+W1 = 0.01 * np.random.randn(h,h2)
+b1 = np.zeros((1,h2))
+W2 = 0.01 * np.random.randn(h2,LABEL_DIM)
 b2 = np.zeros((1,LABEL_DIM))
 
-# some hyperparameters
-step_size = 1e-4
-reg = 1e-4 # regularization strength
+
 
 last_loss = 999999999.99
 # gradient descent loop
@@ -103,10 +116,10 @@ for i in xrange(50000):
   
   #reduce step size if we start getting worse performance
   if loss > last_loss:
-    step_size *= 0.9
+    step_size *= 0.5
   
   if i % 100 == 0:
-    print "iteration %d: step_size: %f \tloss %f" % (i, step_size, loss)
+    print "iteration %d h: %d h2: %d\t reg: %f\tstep_size: %f\tloss %f" % (i, h, h2, reg, step_size, loss)
     last_loss = loss
 
   # compute the gradient on scores
