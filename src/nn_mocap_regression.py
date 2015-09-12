@@ -20,6 +20,7 @@ import numpy as np
 step_size = 1e-4
 reg = 1e-4 # regularization strength#read the data file
 hidden_layer_size = 84
+iteration_count = 1000
 
 if(len(sys.argv) > 1):
   hidden_layer_size = float(sys.argv[1])
@@ -29,7 +30,9 @@ if(len(sys.argv) > 2):
   reg = float(sys.argv[2])
   print "Using reg %f " % (reg)
 
-
+if(len(sys.argv) > 3):
+  iteration_count = int(sys.argv[3])
+  print "iterations  %d " % (iteration_count)
 
 dataFilename = "../mocap_test/labelled_data.txt"
 #if(len(sys.argv) > 1):
@@ -98,7 +101,7 @@ b2 = np.zeros((1,LABEL_DIM))
 last_loss = 999999999.99
 # gradient descent loop
 num_examples = X.shape[0]
-for i in xrange(50000):
+for i in xrange(iteration_count):
 
   # evaluate class scores, [N x K]
   hidden_layer = np.maximum(0, np.dot(X,W) + b) #note ReLU activation
@@ -161,8 +164,8 @@ for i in xrange(50000):
   
 # evaluate training set accuracy
 hidden_layer = np.maximum(0, np.dot(X,W) + b) #note ReLU activation
-hidden_layer2 = np.maximum(0, np.dot(hidden_layer2,W1) + b1) #note ReLU activation
-scores = np.dot(hidden_layer, W2) + b2
+hidden_layer2 = np.maximum(0, np.dot(hidden_layer,W1) + b1) #note ReLU activation
+scores = np.dot(hidden_layer2, W2) + b2
 score_diff = np.subtract(scores,y)
 distances = np.sqrt(np.multiply(score_diff, score_diff))
 avg_distance = np.sum(distances)/num_examples
