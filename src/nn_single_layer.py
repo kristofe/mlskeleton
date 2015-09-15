@@ -18,7 +18,7 @@ import numpy as np
 # some hyperparameters
 step_size = 1e-4
 reg = 0 #1e-4 # regularization strength#read the data file
-hidden_layer_size = 42
+hidden_layer_size = 21
 iteration_count = 1000000
 
 if(len(sys.argv) > 1):
@@ -96,7 +96,7 @@ vW2 = 0.0
 b2 = np.zeros((1,LABEL_DIM))
 vB2 =0.0
 
-mu = 0.1
+mu = 0.001
 
 last_loss = 999999999.99
 # gradient descent loop
@@ -118,10 +118,10 @@ for i in xrange(iteration_count):
   
   #reduce step size if we start getting worse performance
   if loss > last_loss:
-    step_size *= 0.9999
+    step_size *= 0.99
   
   if i % 100 == 0:
-    print "iteration %d h: %d\t reg: %f\tstep_size: %f\tloss %f" % (i, h, reg, step_size, loss)
+    print "iteration %d h: %d\t mu: %f\treg: %f\tstep_size: %f\tloss %f" % (i, h, mu, reg, step_size, loss)
     last_loss = loss
 
   # compute the gradient on scores
