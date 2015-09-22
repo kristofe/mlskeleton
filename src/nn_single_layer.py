@@ -20,6 +20,8 @@ step_size = 1e-4
 reg = 0 #1e-4 # regularization strength#read the data file
 hidden_layer_size = 21
 iteration_count = 1000000
+only_positions = True
+only_rotations = False
 
 if(len(sys.argv) > 1):
   hidden_layer_size = float(sys.argv[1])
@@ -32,11 +34,20 @@ if(len(sys.argv) > 2):
 if(len(sys.argv) > 3):
   iteration_count = int(sys.argv[3])
   print "iterations  %d " % (iteration_count)
+
+if(len(sys.argv) > 4):
+  only_positions = bool(sys.argv[4])
+  print "only_positions " + str(only_positions)
+
+if(len(sys.argv) > 6):
+  only_rotations = bool(sys.argv[4])
+  print "only_rotations " + str(only_rotations)
+
   
 #read the data file
 dataFilename = "../mocap_test/labelled_data.txt"
-if(len(sys.argv) > 4):
-  dataFilename = sys.argv[4]
+if(len(sys.argv) > 6):
+  dataFilename = sys.argv[6]
 
 txtfile = open(dataFilename)
 lines = txtfile.read().split("\n")
@@ -48,9 +59,21 @@ fieldnames.pop(0)
 fieldnames.pop(0)
 fieldnames.pop()
 
+rot_fields = [i for i, j in enumerate(fieldnames) if j.find('Rotation') != -1]
+pos_fields = [i for i, j in enumerate(fieldnames) if j.find('Position') != -1]
+
+LABEL_DIM = 7
+if(only_positions):
+  LABEL_DIM = 3
+if(only_rotations):
+  LABEL_DIM = 4
+
 data = []
 labels = []
+row_count = 0
 for line in lines:
+  if row_count > 40:
+    break
   fields = line.strip().split("\t")
   if(len(fields) != len(fieldnames) + 3):
     continue
@@ -60,14 +83,32 @@ for line in lines:
   fields.pop(0)
   #now take out the last column - it is the valid indicator
   fields.pop()
-  data.append(fields[:len(fields) - 7])
-  labels.append(fields[len(fields) - 7:])
-  
+
+#this is where to remove any fields such as rotation or position
+#doing it the slow way
+  if(only_positions):
+    tmp = []
+    for idx in pos_fields:
+      tmp.append(fields[idx])#this includes the label
+    data.append(tmp[:len(tmp) - LABEL_DIM])
+    labels.append(tmp[len(tmp) - LABEL_DIM:])
+  if(only_rotations):
+    tmp = []
+    for idx in rot_fields:
+      tmp.append(fields[idx])#this includes the label
+    data.append(tmp[:len(tmp) - LABEL_DIM])
+    labels.append(tmp[len(tmp) - LABEL_DIM:])
+  else:
+    data.append(fields[:len(fields) - LABEL_DIM])
+    labels.append(fields[len(fields) - LABEL_DIM:])
+  row_count += 1
+
+print "Data:"
+print data
 
 N = len(data) #number of training examples - around 4K
 D = len(data[0]) #dimensionality - around 42
 K = 1 #there are no classes as this is regression
-LABEL_DIM = 7
 X = np.zeros((N*K,D))
 y = np.zeros((N*K,LABEL_DIM))
 
@@ -160,8 +201,6 @@ for i in xrange(iteration_count):
   vB2_prev = vB2
   vB2 = mu * vB2 - step_size * db2
   b2 += -mu * vB2_prev + (1 + mu) * vB2
-  
-  
 
   #old vanilla update
   #W += -step_size * dW
