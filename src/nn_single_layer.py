@@ -16,10 +16,10 @@ import numpy as np
 #you can then update the weights with this gradient
 
 # some hyperparameters
-step_size = 1e-4
+step_size = 1e-2
 reg = 0 #1e-4 # regularization strength#read the data file
-hidden_layer_size = 21
-iteration_count = 1000000
+hidden_layer_size = 25
+iteration_count = 200000
 only_positions = True
 only_rotations = False
 
@@ -217,5 +217,5 @@ score_diff = np.subtract(scores,y)
 distances = np.sqrt(np.multiply(score_diff, score_diff))
 avg_distance = np.sum(distances)/num_examples
 #predicted_class = np.argmax(scores, axis=1)
-print 'training accuracy (distance): %.2f meters' % avg_distance
+print 'training accuracy (distance): %.4f meters' % avg_distance
 # data units are in meters.. although we mixed in a quaternion
