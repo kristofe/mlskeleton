@@ -59,8 +59,10 @@ fieldnames.pop(0)
 fieldnames.pop(0)
 fieldnames.pop()
 
-rot_fields = [i for i, j in enumerate(fieldnames) if j.find('Rotation') != -1]
-pos_fields = [i for i, j in enumerate(fieldnames) if j.find('Position') != -1]
+#FIXME: IGNORE THE WAND DATA.  wand1 should be removed
+
+rot_fields = [i for i, j in enumerate(fieldnames) if j.find('Rotation') != -1 and j.find('wand1') == -1]
+pos_fields = [i for i, j in enumerate(fieldnames) if j.find('Position') != -1 and j.find('wand1') == -1]
 
 LABEL_DIM = 7
 if(only_positions):

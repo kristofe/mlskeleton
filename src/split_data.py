@@ -17,8 +17,10 @@ fieldnames.pop(0)
 fieldnames.pop(0)
 fieldnames.pop()
 
-rot_fields = [i for i, j in enumerate(fieldnames) if j.find('Rotation') != -1]
-pos_fields = [i for i, j in enumerate(fieldnames) if j.find('Position') != -1]
+#FIXME: IGNORE THE wand1 DATA.  IT SHOULDN'T BE IN HERE
+
+rot_fields = [i for i, j in enumerate(fieldnames) if j.find('Rotation') != -1 and j.find('wand1') == -1]
+pos_fields = [i for i, j in enumerate(fieldnames) if j.find('Position') != -1 and j.find('wand1') == -1]
 
 pos_data = []
 rot_data = []
