@@ -19,6 +19,7 @@ import numpy as np
 step_size = 1e-2
 reg = 0 #1e-4 # regularization strength#read the data file
 hidden_layer_size = 25
+hidden_layer2_size = 25
 iteration_count = 200000
 only_positions = True
 only_rotations = False
@@ -28,15 +29,19 @@ if(len(sys.argv) > 1):
   print "Using hidden layer size %d" % hidden_layer_size
 
 if(len(sys.argv) > 2):
-  reg = float(sys.argv[2])
+  hidden_layer2_size = float(sys.argv[2])
+  print "Using hidden layer2 size %d" % hidden_layer2_size
+  
+if(len(sys.argv) > 3):
+  reg = float(sys.argv[3])
   print "Using reg %f " % (reg)
 
-if(len(sys.argv) > 3):
-  iteration_count = int(sys.argv[3])
+if(len(sys.argv) > 4):
+  iteration_count = int(sys.argv[4])
   print "iterations  %d " % (iteration_count)
 
-if(len(sys.argv) > 4):
-  only_positions = bool(sys.argv[4])
+if(len(sys.argv) > 5):
+  only_positions = bool(sys.argv[5])
   print "only_positions " + str(only_positions)
 
 if(len(sys.argv) > 6):
@@ -46,8 +51,8 @@ if(len(sys.argv) > 6):
   
 #read the data file
 dataFilename = "../mocap_test/labelled_data.txt"
-if(len(sys.argv) > 6):
-  dataFilename = sys.argv[6]
+if(len(sys.argv) > 7):
+  dataFilename = sys.argv[7]
 
 txtfile = open(dataFilename)
 lines = txtfile.read().split("\n")
@@ -124,18 +129,18 @@ print "done importing data"
 #NOTE: I manually checked parsing... it is correct.
 
 #Train a neural net
+  
 # initialize parameters randomly
 h = hidden_layer_size # size of hidden layer
+h2 = hidden_layer2_size
 W = 0.01 * np.random.randn(D,h)
-vW = 0.0
 b = np.zeros((1,h))
-vB = 0.0
-W2 = 0.01 * np.random.randn(h,LABEL_DIM)
-vW2 = 0.0
+W1 = 0.01 * np.random.randn(h,h2)
+b1 = np.zeros((1,h2))
+W2 = 0.01 * np.random.randn(h2,LABEL_DIM)
 b2 = np.zeros((1,LABEL_DIM))
-vB2 =0.0
 
-mu = 0.001
+
 
 last_loss = 999999999.99
 # gradient descent loop
@@ -144,7 +149,8 @@ for i in xrange(iteration_count):
 
   # evaluate class scores, [N x K]
   hidden_layer = np.maximum(0, np.dot(X,W) + b) #note ReLU activation
-  scores = np.dot(hidden_layer, W2) + b2
+  hidden_layer2 = np.maximum(0, np.dot(hidden_layer,W1) + b1) #note ReLU activation
+  scores = np.dot(hidden_layer2, W2) + b2
   
   #compute the L2 loss
   score_diff = np.subtract(scores, y)
@@ -156,11 +162,11 @@ for i in xrange(iteration_count):
   loss = data_loss + reg_loss #this stays the same
   
   #reduce step size if we start getting worse performance
-  if loss > last_loss:
-    step_size *= 0.99
+  if loss > last_loss + last_loss * 0.01:
+    step_size *= 0.95
   
   if i % 100 == 0:
-    print "iteration %d h: %d\t mu: %f\treg: %f\tstep_size: %f\tloss %f" % (i, h, mu, reg, step_size, loss)
+    print "iteration %d h: %d h2: %d\t reg: %f\tstep_size: %f\tloss %f" % (i, h, h2, reg, step_size, loss)
     last_loss = loss
 
   # compute the gradient on scores
@@ -168,10 +174,19 @@ for i in xrange(iteration_count):
 
   # backpropate the gradient to the parameters
   # first backprop into parameters W2 and b2
-  dW2 = np.dot(hidden_layer.T, dscores)
+  dW2 = np.dot(hidden_layer2.T, dscores)
   db2 = np.sum(dscores, axis=0, keepdims=True)
+  
   # next backprop into hidden layer
-  dhidden = np.dot(dscores, W2.T)
+  dhidden2 = np.dot(dscores, W2.T)
+  # backprop the ReLU non-linearity
+  dhidden2[hidden_layer2 <= 0] = 0
+  # finally into W,b
+  dW1 = np.dot(hidden_layer.T, dhidden2)
+  db1 = np.sum(dhidden2, axis=0, keepdims=True)
+  
+  # next backprop into hidden layer
+  dhidden = np.dot(dhidden2, W1.T)
   # backprop the ReLU non-linearity
   dhidden[hidden_layer <= 0] = 0
   # finally into W,b
@@ -180,38 +195,24 @@ for i in xrange(iteration_count):
 
   # add regularization gradient contribution
   dW2 += reg * W2
+  dW1 += reg * W1
   dW += reg * W
-  
-  
-  #calculate nesterov momentum update
-  vW_prev = vW  #back up v
-  vW = mu * vW - step_size * dW
-  W += -mu * vW_prev + (1 + mu) * vW
-  
-  vW2_prev = vW2  #back up v
-  vW2 = mu * vW2 - step_size * dW2
-  W2 += -mu * vW2_prev + (1 + mu) * vW2
-  
-  vB_prev = vB
-  vB = mu * vB - step_size * db
-  b += -mu * vB_prev + (1 + mu) * vB
-  
-  vB2_prev = vB2
-  vB2 = mu * vB2 - step_size * db2
-  b2 += -mu * vB2_prev + (1 + mu) * vB2
 
-  #old vanilla update
-  #W += -step_size * dW
-  #b += -step_size * db
-  #W2 += -step_size * dW2
-  #b2 += -step_size * db2
+  # perform a parameter update
+  W += -step_size * dW
+  b += -step_size * db
+  W1 += -step_size * dW1
+  b1 += -step_size * db1
+  W2 += -step_size * dW2
+  b2 += -step_size * db2
   
 # evaluate training set accuracy
-hidden_layer = np.maximum(0, np.dot(X, W) + b)
-scores = np.dot(hidden_layer, W2) + b2
+hidden_layer = np.maximum(0, np.dot(X,W) + b) #note ReLU activation
+hidden_layer2 = np.maximum(0, np.dot(hidden_layer,W1) + b1) #note ReLU activation
+scores = np.dot(hidden_layer2, W2) + b2
 score_diff = np.subtract(scores,y)
 distances = np.sqrt(np.multiply(score_diff, score_diff))
 avg_distance = np.sum(distances)/num_examples
 #predicted_class = np.argmax(scores, axis=1)
-print 'training accuracy (distance): %.4f meters' % avg_distance
+print 'training accuracy (distance): %.2f meters' % avg_distance
 # data units are in meters.. although we mixed in a quaternion
