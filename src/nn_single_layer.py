@@ -16,10 +16,10 @@ import numpy as np
 #you can then update the weights with this gradient
 
 # some hyperparameters
-step_size = 1e-2
+step_size = 1e-4
 reg = 0 #1e-4 # regularization strength#read the data file
-hidden_layer_size = 25
-iteration_count = 200000
+hidden_layer_size = 15
+iteration_count = 100000
 only_positions = True
 only_rotations = False
 
@@ -72,8 +72,8 @@ data = []
 labels = []
 row_count = 0
 for line in lines:
-  if row_count > 40:
-    break
+  #if row_count > 40:
+  #  break
   fields = line.strip().split("\t")
   if(len(fields) != len(fieldnames) + 3):
     continue
@@ -159,7 +159,7 @@ for i in xrange(iteration_count):
   if loss > last_loss:
     step_size *= 0.99
   
-  if i % 100 == 0:
+  if i % 1000 == 0:
     print "iteration %d h: %d\t mu: %f\treg: %f\tstep_size: %f\tloss %f" % (i, h, mu, reg, step_size, loss)
     last_loss = loss
 
