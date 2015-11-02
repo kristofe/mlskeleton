@@ -18,10 +18,10 @@ import numpy as np
 
 # some hyperparameters
 step_size = 1e-4
-reg = 1e-4 # regularization strength#read the data file
-hidden_layer_size = 84
-hidden_layer2_size = 84
-iteration_count = 1000
+reg = 0 # regularization strength#read the data file
+hidden_layer_size = 5
+hidden_layer2_size = 15
+iteration_count = 10000
 
 if(len(sys.argv) > 1):
   hidden_layer_size = float(sys.argv[1])
@@ -53,8 +53,13 @@ fieldnames.pop(0)
 fieldnames.pop(0)
 fieldnames.pop()
 
+rot_fields = [i for i, j in enumerate(fieldnames) if j.find('Rotation') != -1 and j.find('wand1') == -1]
+pos_fields = [i for i, j in enumerate(fieldnames) if j.find('Position') != -1 and j.find('wand1') == -1]
+valid_fields = [i for i, j in enumerate(fieldnames) if j.find('Position') != -1 and j.find('wand1') == -1]
+
 data = []
 labels = []
+LABEL_DIM = 7
 for line in lines:
   fields = line.strip().split("\t")
   if(len(fields) != len(fieldnames) + 3):
@@ -65,14 +70,20 @@ for line in lines:
   fields.pop(0)
   #now take out the last column - it is the valid indicator
   fields.pop()
-  data.append(fields[:len(fields) - 7])
-  labels.append(fields[len(fields) - 7:])
+  
+  #now only put valid fields in
+  tmp = []
+  for idx in valid_fields:
+    tmp.append(fields[idx])
+  data.append(tmp[:len(tmp) - LABEL_DIM])
+  labels.append(tmp[len(tmp) - LABEL_DIM:])
+#  data.append(fields[:len(fields) - LABEL_DIM])
+#  labels.append(fields[len(fields) - LABEL_DIM:])
   
 
 N = len(data) #number of training examples - around 4K
 D = len(data[0]) #dimensionality - around 42
 K = 1 #there are no classes as this is regression
-LABEL_DIM = 7
 X = np.zeros((N*K,D))
 y = np.zeros((N*K,LABEL_DIM))
 
@@ -126,7 +137,7 @@ for i in xrange(iteration_count):
   if loss > last_loss + last_loss * 0.01:
     step_size *= 0.95
   
-  if i % 100 == 0:
+  if i % 1000 == 0:
     print "iteration %d h: %d h2: %d\t reg: %f\tstep_size: %f\tloss %f" % (i, h, h2, reg, step_size, loss)
     last_loss = loss
 
